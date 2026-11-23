@@ -1,0 +1,52 @@
+SONY KA SENDER 1.0.0  -  HOW TO INSTALL AND USE
+================================================
+Flick photos, videos and files from your Android phone to your Windows PC
+over your own Wi-Fi. Nothing goes through the internet or any cloud.
+By Mehul Soni (@mehuledits.ai)
+
+YOU NEED BOTH PARTS
+  Part 1: the PHONE app    -> SonyKaSender.apk
+  Part 2: the PC receiver  -> Sony-Ka-Sender-PC-1.0.0.zip
+Phone and PC must be on the SAME Wi-Fi.
+
+PART 1 - INSTALL ON THE PHONE (Android 10 or newer)
+1. Download SonyKaSender.apk on your phone (from the Releases page), or
+   download it on the PC and send it to the phone.
+2. Open the file. Android will say it cannot install apps from this source.
+   Tap "Settings" and allow installs from your browser or file manager, just
+   for this install. Then tap Install.
+3. If Play Protect shows a warning: the app is signed with a debug key, not a
+   Play Store key. Tap "More details" > "Install anyway".
+
+PART 2 - INSTALL ON THE PC
+1. Install Node.js (free, one time): https://nodejs.org  (LTS version).
+2. Download Sony-Ka-Sender-PC-1.0.0.zip, right-click > Extract All, and
+   keep the folder (for example C:\Apps\Sony Ka Sender).
+3. Double-click "Sony Ka Sender.vbs". A "desk" window opens and the receiver
+   starts quietly in the background.
+4. If Windows Firewall asks, allow access on private networks (the receiver
+   uses port 7777).
+   Use "Sony Ka Sender (background).vbs" to start without the window, and
+   "Stop Sony Ka Sender.vbs" to stop it.
+
+HOW TO SEND
+1. Open Sony Ka Sender on the phone. Your PC should appear in the list.
+   If not, type the PC address (for example 192.168.1.20) and add it.
+2. Pick photos or files, or use Share > "Flick to PC" from your gallery,
+   and flick them toward the PC.
+3. They land on the desk window. Files are saved in
+   Downloads\Sony Ka Sender on the PC.
+
+TROUBLESHOOTING
+- PC not showing on the phone: check both are on the same Wi-Fi, the PC
+  receiver is running, and Windows Firewall allows it. Guest or "isolated"
+  Wi-Fi networks block this.
+- Change the save folder: set the SKS_DIR environment variable.
+
+UNINSTALL
+Phone: uninstall like any app. PC: run "Stop Sony Ka Sender.vbs", delete the
+folder.
+
+SOURCE CODE AND HELP
+https://github.com/mehulsoni000123/SonyKaSender
+Questions or bugs: message @mehuledits.ai on Instagram.

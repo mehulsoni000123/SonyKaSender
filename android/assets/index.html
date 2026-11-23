@@ -1,0 +1,512 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Sony Ka Sender</title>
+<style>
+  :root{--top:28px;--bottom:20px;--violet:#8b6cff;--violet2:#6d4dff;--ink:#f3f1ff;--muted:rgba(232,228,255,.62);--line:rgba(255,255,255,.1)}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden;background:#16113a;color:var(--ink);font-family:"SamsungOne","Roboto","Segoe UI",system-ui,sans-serif;user-select:none;-webkit-user-select:none;touch-action:none}
+  #bg{position:fixed;inset:0;background:linear-gradient(180deg,#1d1550 0%,#2b1b6e 42%,#1a1f63 72%,#0f1440 100%)}
+  #orb{position:fixed;left:50%;top:58%;width:520px;height:520px;margin:-260px 0 0 -260px;border-radius:50%;
+    background:radial-gradient(circle,rgba(120,140,255,.55) 0%,rgba(139,108,255,.25) 35%,rgba(40,30,120,0) 68%);filter:blur(30px);animation:breathe 6s ease-in-out infinite;pointer-events:none}
+  @keyframes breathe{50%{transform:scale(1.12);opacity:.8}}
+  #grain{position:fixed;inset:0;opacity:.05;pointer-events:none;background-image:radial-gradient(rgba(255,255,255,.9) 1px,transparent 1px);background-size:3px 3px}
+  .screen{position:fixed;inset:0;padding:calc(var(--top) + 10px) 22px calc(var(--bottom) + 18px);display:flex;flex-direction:column;opacity:0;pointer-events:none;transform:translateY(14px);transition:opacity .35s,transform .45s cubic-bezier(.2,.8,.2,1)}
+  .screen.on{opacity:1;pointer-events:auto;transform:none}
+  button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+  .pill{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:48px;padding:0 22px;border-radius:999px;font-size:15px;font-weight:600;transition:transform .15s,filter .15s}
+  .pill:active{transform:scale(.96)}
+  .pill.primary{background:linear-gradient(180deg,#9b80ff,#7656ff);box-shadow:0 10px 30px -8px rgba(123,92,255,.8),inset 0 1px 0 rgba(255,255,255,.35)}
+  .pill.ghost{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.12)}
+  .pill.small{height:38px;padding:0 16px;font-size:13.5px}
+  /* top bar */
+  .bar{display:flex;align-items:center;justify-content:space-between;min-height:44px}
+  .brand b{display:block;font-size:20px;font-weight:700;letter-spacing:-.2px}
+  .brand span{font-size:12.5px;color:var(--muted)}
+  .iconbtn{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1)}
+  .iconbtn svg{width:20px;height:20px}
+  /* devices row */
+  .devices{display:flex;gap:18px;margin-top:22px;overflow-x:auto;padding-bottom:4px}
+  .dev{display:flex;flex-direction:column;align-items:center;gap:7px;min-width:64px;font-size:11.5px;color:var(--muted)}
+  .dev .c{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);position:relative}
+  .dev.on .c{background:rgba(139,108,255,.3);border-color:#a48dff;box-shadow:0 0 0 4px rgba(139,108,255,.18)}
+  .dev.on{color:var(--ink)}
+  .dev .c i{position:absolute;right:2px;bottom:2px;width:12px;height:12px;border-radius:50%;background:#46e39a;border:2px solid #241a5e}
+  .dev svg{width:24px;height:24px}
+  .dev span{max-width:76px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* home hero */
+  .hero{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+  .heroIcon{width:118px;height:118px;border-radius:30px;box-shadow:0 30px 60px -18px rgba(90,70,255,.8);animation:float 5s ease-in-out infinite}
+  @keyframes float{50%{transform:translateY(-8px) rotate(-2deg)}}
+  .hero h2{margin-top:30px;font-size:27px;line-height:1.15;font-weight:700;letter-spacing:-.4px}
+  .hero p{margin-top:10px;font-size:14.5px;line-height:1.45;color:var(--muted);max-width:300px}
+  .actions{display:grid;gap:10px}
+  .actions .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .tip{margin-top:14px;text-align:center;font-size:12px;color:rgba(232,228,255,.45)}
+  /* flick screen */
+  .chip{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 14px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);font-size:12.5px;max-width:230px}
+  .chip i{width:7px;height:7px;border-radius:50%;background:#46e39a;flex:none}
+  .chip.off i{background:#ff7a7a}
+  .chip span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #stage{position:relative;flex:1;perspective:900px;perspective-origin:50% 0%;display:flex;align-items:center;justify-content:center;margin-top:6px}
+  .pc{position:absolute;left:50%;top:50%;transform-style:preserve-3d;will-change:transform}
+  .pc .f{border-radius:12px;overflow:hidden;background:#fbfbf8;padding:8px;box-shadow:0 2px 6px rgba(0,0,0,.25),0 34px 60px -14px rgba(5,0,40,.75)}
+  .pc .f img{display:block;max-width:min(66vw,270px);max-height:38vh;min-width:140px;border-radius:6px;object-fit:cover}
+  .pc .badge{position:absolute;left:16px;bottom:16px;padding:4px 8px;border-radius:6px;background:rgba(0,0,0,.55);font-size:11px;font-weight:600}
+  .pc .doc{width:min(60vw,230px);height:min(38vh,300px);padding:22px 18px;color:#1c2333}
+  .pc .doc .ext{display:inline-block;padding:5px 9px;border-radius:6px;background:#6d4dff;color:#fff;font-size:11px;font-weight:700;letter-spacing:.5px}
+  .pc .doc .n{margin-top:14px;font-weight:700;font-size:15px;line-height:1.3;word-break:break-word;max-height:60px;overflow:hidden}
+  .pc .doc b{display:block;height:7px;border-radius:4px;background:#e8eaf2;margin:10px 0}
+  .pc .doc b.h{background:#ffe680}
+  .pc .doc .s{position:absolute;left:26px;bottom:24px;font-size:11px;color:#7d8597}
+  .pc .lnk{width:min(70vw,280px);background:#111a2e;color:#e8efff;padding:18px}
+  .pc .lnk .d{font-weight:700;font-size:15px;display:flex;gap:8px;align-items:center}
+  .pc .lnk .d:before{content:"";width:18px;height:18px;border-radius:5px;background:linear-gradient(#5b8cff,#8b6cff)}
+  .pc .lnk .u{margin-top:10px;font-size:12px;color:#9fb0d0;word-break:break-all;max-height:64px;overflow:hidden}
+  .pc .note{width:min(70vw,280px);background:#fff8c9;color:#2c2a1d;padding:18px;font:15px/1.45 Georgia,serif;max-height:36vh;overflow:hidden;white-space:pre-wrap}
+  .pc .ring{position:absolute;left:50%;top:50%;width:64px;height:64px;margin:-32px;border-radius:50%;background:conic-gradient(#fff var(--p,0%),rgba(255,255,255,.2) 0);-webkit-mask:radial-gradient(circle,transparent 25px,#000 26px);mask:radial-gradient(circle,transparent 25px,#000 26px);display:none}
+  #counter{position:absolute;top:2px;left:0;right:0;text-align:center;font-size:12px;color:var(--muted)}
+  .hint{text-align:center}
+  .hint h3{font-size:22px;font-weight:700;letter-spacing:-.3px}
+  .hint p{margin-top:6px;font-size:13.5px;color:var(--muted)}
+  .hint .swipe{margin:10px auto 0;width:22px;height:34px;border:2px solid rgba(255,255,255,.35);border-radius:12px;position:relative}
+  .hint .swipe:after{content:"";position:absolute;left:50%;top:18px;width:4px;height:7px;margin-left:-2px;border-radius:2px;background:#fff;animation:sw 1.6s ease-in-out infinite}
+  @keyframes sw{0%{transform:translateY(0);opacity:0}30%{opacity:1}100%{transform:translateY(-14px);opacity:0}}
+  .flickBtns{display:flex;gap:10px;justify-content:center;margin-top:16px}
+  #beam{position:fixed;left:50%;top:-40px;width:260px;height:120px;margin-left:-130px;border-radius:50%;background:radial-gradient(ellipse,rgba(190,170,255,.9),rgba(139,108,255,0) 70%);filter:blur(10px);opacity:0;pointer-events:none}
+  #sendbar{height:3px;border-radius:2px;background:rgba(255,255,255,.12);margin:12px 30px 0;overflow:hidden;opacity:0;transition:opacity .3s}
+  #sendbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#9b80ff,#7cc7ff);transition:width .2s}
+  /* delivered */
+  #done .hero h2{margin-top:36px}
+  .okOrb{width:150px;height:150px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 50% 40%,rgba(160,140,255,.85),rgba(109,77,255,.35) 60%,rgba(109,77,255,0) 72%)}
+  .okOrb svg{width:54px;height:54px}
+  .okOrb.pop{animation:pop .7s cubic-bezier(.2,1.4,.4,1)}
+  @keyframes pop{0%{transform:scale(.4);opacity:0}100%{transform:scale(1);opacity:1}}
+  .okOrb path{stroke-dasharray:60;stroke-dashoffset:60}
+  .okOrb.pop path{animation:draw .5s .25s ease-out forwards}
+  @keyframes draw{to{stroke-dashoffset:0}}
+  .deliv{margin-top:12px;display:inline-flex;align-items:center;gap:8px;font-size:13.5px;color:#cfc6ff}
+  /* onboarding */
+  #onb .slides{flex:1;position:relative}
+  .slide{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;opacity:0;transform:translateX(30px);transition:.45s cubic-bezier(.2,.8,.2,1);pointer-events:none}
+  .slide.on{opacity:1;transform:none;pointer-events:auto}
+  .slide.gone{transform:translateX(-30px)}
+  .slide h2{margin-top:30px;font-size:28px;line-height:1.15;font-weight:700;letter-spacing:-.4px}
+  .slide p{margin-top:12px;font-size:14.5px;line-height:1.5;color:var(--muted);max-width:300px}
+  .pcArt{width:130px;height:96px;position:relative}
+  .pcArt .scr{position:absolute;left:10px;right:10px;top:0;height:74px;border-radius:9px;border:3px solid #cbbfff;background:repeating-linear-gradient(0deg,rgba(203,191,255,.15) 0 1px,transparent 1px 12px),repeating-linear-gradient(90deg,rgba(203,191,255,.15) 0 1px,transparent 1px 12px),#2c2580}
+  .pcArt .base{position:absolute;left:0;right:0;bottom:8px;height:10px;border-radius:0 0 12px 12px;background:#cbbfff}
+  .pcArt .ph{position:absolute;right:-6px;bottom:0;width:30px;height:52px;border-radius:7px;background:#9b80ff;border:3px solid #e6dfff;animation:float 4s ease-in-out infinite}
+  .dots{display:flex;gap:6px;justify-content:center;margin:12px 0 18px}
+  .dots i{width:7px;height:7px;border-radius:4px;background:rgba(255,255,255,.25);transition:.3s}
+  .dots i.on{width:22px;background:#fff}
+  .onbBtns{display:flex;justify-content:space-between;gap:10px}
+  .devList{width:100%;margin-top:22px;display:grid;gap:8px;text-align:left}
+  .devItem{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.09)}
+  .devItem.on{border-color:#a48dff;background:rgba(139,108,255,.2)}
+  .devItem svg{width:22px;height:22px;flex:none}
+  .devItem b{display:block;font-size:14.5px}
+  .devItem small{font-size:11.5px;color:var(--muted)}
+  .devItem .tick{margin-left:auto;width:20px;height:20px;border-radius:50%;border:2px solid rgba(255,255,255,.3)}
+  .devItem.on .tick{border:6px solid #a48dff}
+  .searching{display:flex;align-items:center;gap:10px;justify-content:center;font-size:13px;color:var(--muted);padding:10px}
+  .spin{width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.2);border-top-color:#fff;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  /* sheet */
+  #scrim{position:fixed;inset:0;background:rgba(5,3,20,.5);opacity:0;pointer-events:none;transition:.3s}
+  #scrim.on{opacity:1;pointer-events:auto}
+  .sheet{position:fixed;left:0;right:0;bottom:0;padding:16px 20px calc(var(--bottom) + 18px);border-radius:26px 26px 0 0;background:#1d1748;border-top:1px solid rgba(255,255,255,.08);transform:translateY(105%);transition:transform .4s cubic-bezier(.2,.8,.2,1);max-height:82vh;overflow-y:auto}
+  .sheet.on{transform:none}
+  .sheet .grab{width:38px;height:4px;border-radius:2px;background:rgba(255,255,255,.25);margin:0 auto 14px}
+  .sheet h4{font-size:18px;font-weight:700}
+  .sheet .sub{font-size:12.5px;color:var(--muted);margin-top:4px}
+  .field{display:flex;gap:8px;margin-top:14px}
+  .field input,textarea{flex:1;height:44px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(0,0,0,.2);color:#fff;padding:0 14px;font:inherit;font-size:14px;outline:none;user-select:text;-webkit-user-select:text}
+  textarea{height:120px;width:100%;padding:12px 14px;resize:none;margin-top:14px}
+  .toggle{display:flex;align-items:center;justify-content:space-between;margin-top:18px;padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.06)}
+  .toggle b{font-size:14px}.toggle small{display:block;font-size:11.5px;color:var(--muted);margin-top:2px}
+  .sw{width:46px;height:28px;border-radius:14px;background:rgba(255,255,255,.2);position:relative;transition:.25s;flex:none}
+  .sw:after{content:"";position:absolute;left:3px;top:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:.25s}
+  .sw.on{background:#7656ff}.sw.on:after{left:21px}
+  .help{margin-top:16px;font-size:12px;line-height:1.5;color:rgba(232,228,255,.5)}
+  .gf{display:flex;align-items:center;gap:12px;width:100%;margin-top:12px;padding:12px 14px;border-radius:16px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.09);text-align:left}
+  .gfDot{width:10px;height:10px;border-radius:50%;background:#ffb44b;flex:none;box-shadow:0 0 0 4px rgba(255,180,75,.15)}
+  .gf.on .gfDot{background:#46e39a;box-shadow:0 0 0 4px rgba(70,227,154,.15)}
+  .gfTxt{flex:1}.gfTxt b{display:block;font-size:14px}.gfTxt small{font-size:11.5px;color:var(--muted)}
+  .gfGo{font-size:12.5px;font-weight:700;color:#cbbcff;padding:7px 12px;border-radius:999px;background:rgba(139,108,255,.25)}
+  .gf.on .gfGo{display:none}
+  #toast{position:fixed;left:50%;bottom:calc(var(--bottom) + 90px);transform:translate(-50%,10px);opacity:0;transition:.3s;padding:10px 16px;border-radius:999px;background:rgba(10,8,30,.85);font-size:13px;max-width:86vw;text-align:center;pointer-events:none;z-index:99}
+  #toast.on{opacity:1;transform:translate(-50%,0)}
+</style>
+</head>
+<body>
+<div id="bg"></div><div id="orb"></div><div id="grain"></div><div id="beam"></div>
+
+<!-- ============ ONBOARDING ============ -->
+<section class="screen" id="onb">
+  <div class="slides">
+    <div class="slide on" data-i="0">
+      <img class="heroIcon" src="icon.png" alt="">
+      <h2>A little magic.<br>Between your devices.</h2>
+      <p>Photos, videos, links and papers. Make a soft wrist flick or swipe the paper upward, and watch it land on your PC.</p>
+    </div>
+    <div class="slide" data-i="1">
+      <div class="pcArt"><div class="scr"></div><div class="base"></div><div class="ph"></div></div>
+      <h2>Give your PC<br>a little magic.</h2>
+      <p>On your PC, open <b>Sony Ka Sender</b> from the desktop. Keep the phone and PC on the same Wi-Fi, or plug in the USB cable.</p>
+    </div>
+    <div class="slide" data-i="2">
+      <h2 style="margin-top:0">Where shall it fly?</h2>
+      <p>Choose a nearby PC. Yours only needs to be open.</p>
+      <div class="devList" id="onbDevs"></div>
+    </div>
+  </div>
+  <div class="dots"><i class="on"></i><i></i><i></i></div>
+  <div class="onbBtns"><button class="pill ghost" id="onbBack">Back</button><button class="pill primary" id="onbNext" style="flex:1">Next</button></div>
+</section>
+
+<!-- ============ HOME ============ -->
+<section class="screen" id="home">
+  <div class="bar">
+    <div class="brand"><b>Sony Ka Sender</b><span>A little magic, every time.</span></div>
+    <button class="iconbtn" id="openDevices" aria-label="Devices"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 12.5a10 10 0 0 1 14 0"/><path d="M8.5 15.8a5 5 0 0 1 7 0"/><circle cx="12" cy="19" r="1.2" fill="currentColor"/></svg></button>
+  </div>
+  <div class="devices" id="devRow"></div>
+  <div class="hero">
+    <img class="heroIcon" src="icon.png" alt="">
+    <h2>Give it a little flick.</h2>
+    <p id="homeSub">Pick something, then flick your wrist or swipe it up. It lands on your PC.</p>
+  </div>
+  <div class="actions">
+    <button class="pill primary" id="bMedia"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/></svg>Photos &amp; videos</button>
+    <div class="row">
+      <button class="pill ghost" id="bFiles">Files</button>
+      <button class="pill ghost" id="bText">Link or note</button>
+    </div>
+  </div>
+  <button class="gf" id="gfCard"><span class="gfDot"></span><span class="gfTxt"><b>Gallery flick</b><small id="gfSub">Open any photo in Gallery and flick it to your PC.</small></span><span class="gfGo" id="gfGo">Turn on</span></button>
+</section>
+
+<!-- ============ FLICK ============ -->
+<section class="screen" id="flick">
+  <div class="bar">
+    <button class="iconbtn" id="fClose" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    <button class="chip" id="fTarget"><i></i><span>Choose a PC</span></button>
+  </div>
+  <div id="stage"><div id="counter"></div></div>
+  <div class="hint">
+    <h3>Give it a little flick.</h3>
+    <p id="flickSub">Flick your wrist, or swipe the card up with a finger.</p>
+  </div>
+  <div id="sendbar"><i></i></div>
+  <div class="flickBtns">
+    <button class="pill ghost small" id="fBack">↩ Put papers back</button>
+    <button class="pill primary small" id="fAll">Send all</button>
+  </div>
+</section>
+
+<!-- ============ DELIVERED ============ -->
+<section class="screen" id="done">
+  <div class="bar"><div></div></div>
+  <div class="hero">
+    <div class="okOrb" id="okOrb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+    <h2>A little magic, delivered.</h2>
+    <div class="deliv" id="delivTo"></div>
+  </div>
+  <div class="actions"><button class="pill primary" id="dMore">Send more</button></div>
+</section>
+
+<!-- ============ SHEETS ============ -->
+<div id="scrim"></div>
+<div class="sheet" id="devSheet">
+  <div class="grab"></div>
+  <h4>Where shall it fly?</h4>
+  <div class="sub">Choose a nearby PC. Sony Ka Sender must be open on it.</div>
+  <div class="devList" id="sheetDevs"></div>
+  <div class="field"><input id="ipIn" inputmode="decimal" placeholder="Add PC by address, e.g. 192.168.1.20"><button class="pill ghost small" id="ipAdd">Add</button></div>
+  <div class="toggle"><div><b>Wrist flick</b><small>Send by flicking the phone, not just swiping.</small></div><div class="sw" id="swFlick"></div></div>
+  <div class="help">Can't see your PC? Check both are on the same Wi-Fi, and allow "Node.js" in the Windows firewall prompt on the PC. A USB cable with debugging on also works.</div>
+</div>
+<div class="sheet" id="textSheet">
+  <div class="grab"></div>
+  <h4>Flick a link or note</h4>
+  <div class="sub">Links open straight in a browser tab on your PC.</div>
+  <textarea id="textIn" placeholder="Paste a link or type a note…"></textarea>
+  <div class="field"><button class="pill primary" id="textGo" style="flex:1">Add to stack</button></div>
+</div>
+<div id="toast"></div>
+
+<script>
+// ---------------------------------------------------------------------------
+// Bridge (real on the phone; a mock when previewed in a desktop browser)
+// ---------------------------------------------------------------------------
+const NATIVE = !!window.SKS;
+if(!NATIVE){
+  const fake = (i,w,h,hue)=>{const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');x.fillStyle=`hsl(${hue},55%,62%)`;x.fillRect(0,0,w,h);x.fillStyle=`hsl(${hue+40},60%,40%)`;x.beginPath();x.arc(w*.7,h*.3,w*.18,0,7);x.fill();x.fillStyle='rgba(255,255,255,.85)';x.font='bold 42px sans-serif';x.fillText('IMG '+i,24,h-30);return c.toDataURL('image/jpeg',.8)};
+  window.SKS = {
+    pickMedia(){ setTimeout(()=>SKSCB.onItems(JSON.stringify([{id:'m1',kind:'image',name:'IMG_2041.jpg',thumb:fake(1,600,800,20)},{id:'m2',kind:'image',name:'IMG_2042.jpg',thumb:fake(2,800,600,200)},{id:'m3',kind:'video',name:'VID_0007.mp4',thumb:fake(3,600,900,280)}])),300) },
+    pickFiles(){ setTimeout(()=>SKSCB.onItems(JSON.stringify([{id:'d1',kind:'doc',name:'Offer_Sheet_Final.pdf',size:482000,mime:'application/pdf'}])),300) },
+    addText(t){ SKSCB.onItems(JSON.stringify([{id:'t'+Date.now(),kind:/https?:\/\//.test(t)?'link':'note',name:'Link',text:t}])) },
+    discover(){ setTimeout(()=>SKSCB.onDevices(JSON.stringify([{name:"Mehul's PC",host:'127.0.0.1',port:7777,via:'USB'}])),900) },
+    send(id){ let p=0; const t=setInterval(()=>{p+=.25; SKSCB.onProgress(id,Math.min(1,p)); if(p>=1){clearInterval(t); SKSCB.onSent(id,true,'')}},150) },
+    forget(){}, deviceName(){ return 'Galaxy Z Flip7' }, haptic(){}, toast(m){ toast(m) }, close(){}
+  };
+}
+
+// ---------------------------------------------------------------------------
+// State
+// ---------------------------------------------------------------------------
+const $ = s => document.querySelector(s);
+const LS = { get:(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}}, set:(k,v)=>localStorage.setItem(k,JSON.stringify(v)) };
+let devices = [];                        // found this session
+let target = LS.get('sks.target', null); // {name,host,port,via}
+let manual = LS.get('sks.hosts', []);
+let wristFlick = LS.get('sks.wrist', true);
+let queue = [];                          // cards waiting in the stack
+let inflight = new Map();                // id -> item being sent
+let sentCount = 0, fromShare = false, busy = false, autoMode = false;
+const myName = (()=>{ try{ return SKS.deviceName() }catch{ return 'Phone' } })();
+
+// ---------------------------------------------------------------------------
+// Screens & sheets
+// ---------------------------------------------------------------------------
+let current = null;
+function show(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on', s.id===id)); current=id; motion(id==='flick'); }
+function openSheet(id){ $('#scrim').classList.add('on'); $(id).classList.add('on'); if(id==='#devSheet') discover(); }
+function closeSheets(){ $('#scrim').classList.remove('on'); document.querySelectorAll('.sheet').forEach(s=>s.classList.remove('on')); }
+$('#scrim').onclick = closeSheets;
+let toastT; function toast(m){ const t=$('#toast'); t.textContent=m; t.classList.add('on'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('on'),2600); }
+
+// ---------------------------------------------------------------------------
+// Devices
+// ---------------------------------------------------------------------------
+const ICON_PC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="4" y="5" width="16" height="11" rx="2"/><path d="M2 19h20"/></svg>';
+const ICON_PH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="7" y="3" width="10" height="18" rx="2.5"/><path d="M11 18h2"/></svg>';
+let searching = false;
+function discover(){
+  if(searching) return; searching = true; renderDevices();
+  const extra = [...new Set([...(manual||[]), ...(target&&target.ips||[]).filter(ip=>!/^172\./.test(ip)), target && target.via!=='USB' ? target.host : null].filter(Boolean))].join(',');
+  SKS.discover(extra);
+}
+function sameDev(a,b){ return a && b && a.host===b.host && a.port===b.port; }
+function renderDevices(){
+  const list = devices.length ? devices : (target ? [Object.assign({stale:true},target)] : []);
+  // home row
+  $('#devRow').innerHTML = `<div class="dev"><div class="c">${ICON_PH}</div><span>This phone</span></div>` +
+    list.map((d,i)=>`<div class="dev ${sameDev(d,target)?'on':''}" data-i="${i}"><div class="c">${ICON_PC}${d.stale?'':'<i></i>'}</div><span>${esc(d.name)}</span></div>`).join('') +
+    `<div class="dev" id="addDev"><div class="c" style="font-size:24px">+</div><span>${searching?'Searching…':'Add'}</span></div>`;
+  $('#devRow').querySelectorAll('.dev[data-i]').forEach(el=>el.onclick=()=>choose(list[+el.dataset.i]));
+  $('#addDev').onclick=()=>openSheet('#devSheet');
+  // lists
+  const item = (d,i)=>`<div class="devItem ${sameDev(d,target)?'on':''}" data-i="${i}">${ICON_PC}<div><b>${esc(d.name)}</b><small>${d.stale?'Not found right now':d.via==='USB'?'Connected by USB cable':d.via==='Tailscale'?'Away from home · via Tailscale':'Same Wi-Fi · '+esc(d.host)}</small></div><div class="tick"></div></div>`;
+  const html = list.map(item).join('') + (searching ? '<div class="searching"><div class="spin"></div>Looking for nearby PCs…</div>' : (list.length?'':'<div class="searching">No PC found yet. Open Sony Ka Sender on your PC.</div>'));
+  ['#onbDevs','#sheetDevs'].forEach(s=>{ $(s).innerHTML = html; $(s).querySelectorAll('.devItem').forEach(el=>el.onclick=()=>choose(list[+el.dataset.i])); });
+  // chip
+  const chip=$('#fTarget'); chip.classList.toggle('off', !target || !!(list.find(d=>sameDev(d,target))||{}).stale);
+  chip.querySelector('span').textContent = target ? 'Sending to '+target.name : 'Choose a PC';
+}
+function choose(d){ if(!d) return; target = {name:d.name,host:d.host,port:d.port,via:d.via,ips:d.ips||(target&&target.name===d.name?target.ips:null)}; LS.set('sks.target',target); SKS.haptic('tick'); renderDevices(); if($('#devSheet').classList.contains('on')) setTimeout(closeSheets,250); }
+$('#openDevices').onclick=()=>openSheet('#devSheet');
+$('#fTarget').onclick=()=>openSheet('#devSheet');
+$('#ipAdd').onclick=()=>{ const v=$('#ipIn').value.trim(); if(!/^[\w.\-]+$/.test(v)) return toast('Type an address like 192.168.1.20'); manual=[...new Set([...manual,v])]; LS.set('sks.hosts',manual); $('#ipIn').value=''; searching=false; discover(); };
+const sw=$('#swFlick'); sw.classList.toggle('on',wristFlick); sw.onclick=()=>{ wristFlick=!wristFlick; LS.set('sks.wrist',wristFlick); sw.classList.toggle('on',wristFlick); motion(current==='flick'); };
+
+// ---------------------------------------------------------------------------
+// Items & the stack
+// ---------------------------------------------------------------------------
+function esc(s){ return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function fmt(b){ if(!(b>0)) return ''; const u=['B','KB','MB','GB']; let i=0; while(b>=1024&&i<3){b/=1024;i++} return b.toFixed(i?1:0)+' '+u[i]; }
+function cardHTML(it){
+  if(it.kind==='image'||it.kind==='video') return `<div class="f"><img src="${it.thumb||''}" draggable="false">${it.kind==='video'?'<div class="badge">▶ Video</div>':''}</div>`;
+  if(it.kind==='link'){ const m=(it.text||'').match(/https?:\/\/[^\s]+/); let host='Link'; try{host=new URL(m[0]).hostname.replace(/^www\./,'')}catch{} return `<div class="f lnk"><div class="d">${esc(host)}</div><div class="u">${esc(m?m[0]:it.text)}</div></div>`; }
+  if(it.kind==='note') return `<div class="f note">${esc(it.text)}</div>`;
+  const ext=(it.name.split('.').pop()||'FILE').slice(0,5).toUpperCase();
+  return `<div class="f doc"><span class="ext">${esc(ext)}</span><div class="n">${esc(it.name)}</div><b style="width:90%"></b><b class="h" style="width:72%"></b><b style="width:84%"></b><b style="width:60%"></b><div class="s">${fmt(it.size)}</div></div>`;
+}
+const stage = $('#stage');
+function layout(animate){
+  const shown = queue.slice(0,4);
+  shown.forEach((it,i)=>{
+    if(!it.el){ it.el=document.createElement('div'); it.el.className='pc'; it.el.innerHTML=cardHTML(it)+'<div class="ring"></div>'; stage.appendChild(it.el); wireSwipe(it); it.el.animate([{opacity:0,transform:'translate(-50%,-30%) scale(.9)'},{opacity:1,transform:'translate(-50%,-50%)'}],{duration:400,easing:'cubic-bezier(.2,.8,.2,1)'}); }
+    const rot = i===0 ? 0 : (i%2?-1:1)*(3+i*1.5);
+    it.base = `translate(-50%,-50%) translateY(${-i*10}px) scale(${1-i*0.05}) rotate(${rot}deg)`;
+    it.el.style.zIndex = 10-i;
+    it.el.style.transition = animate ? 'transform .45s cubic-bezier(.2,.8,.2,1)' : '';
+    it.el.style.transform = it.base;
+    it.el.style.pointerEvents = i===0 ? 'auto' : 'none';
+    it.el.style.filter = i===0 ? '' : `brightness(${1-i*0.12})`;
+  });
+  queue.slice(4).forEach(it=>{ if(it.el){ it.el.remove(); it.el=null; } });
+  $('#counter').textContent = queue.length ? (queue.length===1 ? '1 ready' : `${queue.length} ready · swipe one at a time`) : '';
+  $('#fAll').style.display = queue.length>1 ? '' : 'none';
+}
+const J = v => typeof v==='string' ? JSON.parse(v) : v;
+window.SKSCB = {
+  onInsets(t,b){ document.documentElement.style.setProperty('--top',t+'px'); document.documentElement.style.setProperty('--bottom',b+'px'); },
+  onWristFlick(){ if(current==='flick' && !busy && queue.length && !document.querySelector('.sheet.on')) flick(queue[0]); },
+  onResumeApp(on){ galleryState(on===true||on==='true'); },
+  onItems(json, share, auto){
+    const list = J(json);
+    if(!list.length){ return; }
+    if(share) fromShare = true;
+    autoMode = auto===true||auto==='true';
+    list.forEach(it=>queue.push(it));
+    sentCount = 0;
+    if(current!=='flick') show('flick');
+    layout(true);
+    if(!target) { setTimeout(()=>openSheet('#devSheet'),450); return; }
+    if(autoMode){ setTimeout(()=>{ const n=queue.length; for(let i=0;i<n;i++) setTimeout(()=>flick(queue[0]), i*300); }, 380); }
+  },
+  onDevices(json){
+    searching=false;
+    // one entry per PC: prefer Wi-Fi (works without the cable), USB as fallback
+    const byName = new Map();
+    const rank = v => v==='Wi-Fi' ? 0 : v==='Tailscale' ? 1 : 2;   // home Wi-Fi first, then Tailscale (any network), then USB
+    J(json).forEach(d=>{ const o=byName.get(d.name); if(!o || rank(d.via)<rank(o.via)) byName.set(d.name, Object.assign({}, d, {ips: d.ips || (o&&o.ips)})); else if(d.ips && !o.ips) o.ips=d.ips; });
+    devices = [...byName.values()];
+    // keep the chosen PC up to date (its address may change), else auto-pick the first one
+    if(target){ const m = devices.find(d=>d.name===target.name && d.via===target.via) || devices.find(d=>d.name===target.name); if(m) choose(m); }
+    else if(devices.length) choose(devices[0]);
+    renderDevices();
+  },
+  onProgress(id,p){
+    const it = inflight.get(id); if(!it) return;
+    it.p = p; updateSendbar();
+  },
+  onSent(id, ok, err){
+    const it = inflight.get(id); if(!it) return;
+    inflight.delete(id);
+    if(ok){ sentCount++; SKS.forget(id); }
+    else {
+      SKS.haptic('error');
+      toast(`Couldn't reach ${target?target.name:'your PC'}. ${err||''}`.trim());
+      it.el = null; queue.unshift(it); layout(true);
+      const top = queue[0].el; top && top.animate([{transform:it.base+' translateX(0)'},{transform:it.base+' translateX(-12px)'},{transform:it.base+' translateX(10px)'},{transform:it.base+' translateX(0)'}],{duration:380});
+    }
+    updateSendbar();
+    if(!inflight.size && !queue.length && sentCount) delivered();
+  },
+  onBack(){
+    if(document.querySelector('.sheet.on')){ closeSheets(); return true; }
+    if(current==='flick'){ putBack(); return true; }
+    if(current==='done'){ show('home'); return true; }
+    if(current==='onb' && slide>0){ go(slide-1); return true; }
+    return false;
+  }
+};
+function updateSendbar(){
+  const all=[...inflight.values()];
+  $('#sendbar').style.opacity = all.length ? 1 : 0;
+  const p = all.length ? all.reduce((s,x)=>s+(x.p||0),0)/all.length : 0;
+  $('#sendbar i').style.width = (p*100).toFixed(0)+'%';
+  $('#flickSub').textContent = all.length ? `Sending ${all.length} to ${target?target.name:'PC'}… ${(p*100).toFixed(0)}%` : 'Flick your wrist, or swipe the card up with a finger.';
+}
+
+// ---------------------------------------------------------------------------
+// Swipe-up gesture on the top card
+// ---------------------------------------------------------------------------
+function wireSwipe(it){
+  const el = it.el; let y0=0, x0=0, dy=0, dx=0, t0=0, samples=[];
+  el.addEventListener('pointerdown',e=>{
+    if(busy) return; el.setPointerCapture(e.pointerId); y0=e.clientY; x0=e.clientX; dy=dx=0; t0=performance.now(); samples=[[t0,0]]; el.style.transition='';
+  });
+  el.addEventListener('pointermove',e=>{
+    if(!samples.length) return;
+    dy = e.clientY-y0; dx = e.clientX-x0; if(dy>0) dy = dy*0.25;
+    samples.push([performance.now(),dy]); if(samples.length>6) samples.shift();
+    const tilt = Math.max(0,Math.min(38,-dy/6));
+    el.style.transform = `${it.base} translate(${dx*0.3}px,${dy}px) rotateX(${tilt}deg) scale(${1-Math.min(.12,Math.abs(dy)/2400)})`;
+  });
+  const end=()=>{
+    if(!samples.length) return;
+    const [ta,ya]=samples[0], [tb,yb]=samples[samples.length-1]; const v=(yb-ya)/Math.max(1,tb-ta); samples=[];
+    if(dy<-110 || v<-0.55) flick(it, {dy, dx});
+    else { el.style.transition='transform .5s cubic-bezier(.2,1.3,.4,1)'; el.style.transform=it.base; }
+  };
+  el.addEventListener('pointerup',end); el.addEventListener('pointercancel',end);
+}
+
+function flick(it, from){
+  if(!it || !it.el) return;
+  if(!target){ openSheet('#devSheet'); toast('Choose where it should fly first'); if(it.el){it.el.style.transition='transform .5s cubic-bezier(.2,1.3,.4,1)'; it.el.style.transform=it.base;} return; }
+  busy = true;
+  queue.splice(queue.indexOf(it),1);
+  inflight.set(it.id, it); it.p=0;
+  SKS.haptic('flick');
+  SKS.send(it.id, [...new Set([target.host, ...(target.ips||[]).filter(ip=>!/^172\./.test(ip)), '127.0.0.1'])].join(','), target.port, myName);
+  const el = it.el; it.el = null;
+  const start = from ? `${it.base} translate(${from.dx*0.3}px,${from.dy}px) rotateX(${Math.max(0,Math.min(38,-from.dy/6))}deg)` : it.base;
+  el.style.transition='';
+  el.animate([
+    {transform:start, opacity:1, filter:'blur(0)'},
+    {transform:`translate(-50%,-50%) translateY(-38vh) translateZ(-120px) rotateX(48deg) scale(.82)`, opacity:1, offset:.45},
+    {transform:`translate(-50%,-50%) translateY(-95vh) translateZ(-420px) rotateX(64deg) scale(.5)`, opacity:0, filter:'blur(5px)'}
+  ],{duration:620, easing:'cubic-bezier(.45,.05,.7,.25)', fill:'forwards'}).onfinish=()=>el.remove();
+  $('#beam').animate([{opacity:0,transform:'scaleX(.6)'},{opacity:1,transform:'scaleX(1.1)',offset:.55},{opacity:0,transform:'scaleX(1.4)'}],{duration:700,delay:220,easing:'ease-out'});
+  setTimeout(()=>{ busy=false; layout(true); updateSendbar(); }, 260);
+}
+
+$('#fAll').onclick=()=>{ if(!target) return openSheet('#devSheet'); const n=queue.length; for(let i=0;i<n;i++) setTimeout(()=>flick(queue[0]), i*380); };
+function putBack(){ queue.forEach(it=>{ if(it.el) it.el.remove(); SKS.forget(it.id); }); queue=[]; layout(); if(fromShare && !inflight.size){ fromShare=false; SKS.close&&SKS.close(); } show('home'); }
+$('#fBack').onclick=putBack; $('#fClose').onclick=putBack;
+
+// ---------------------------------------------------------------------------
+// Wrist flick (device motion)
+// ---------------------------------------------------------------------------
+function motion(on){ try{ SKS.armFlick && SKS.armFlick(!!(on && wristFlick)); }catch(e){} }
+// ---------------------------------------------------------------------------
+// Delivered
+// ---------------------------------------------------------------------------
+let doneT;
+function delivered(){
+  SKS.haptic('success');
+  $('#delivTo').innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a48dff" stroke-width="2.4" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>${sentCount===1?'Delivered':'All '+sentCount+' delivered'} to ${esc(target?target.name:'your PC')}`;
+  show('done'); const o=$('#okOrb'); o.classList.remove('pop'); void o.offsetWidth; o.classList.add('pop');
+  clearTimeout(doneT);
+  if(fromShare){ fromShare=false; doneT=setTimeout(()=>{ show('home'); SKS.close&&SKS.close(); }, autoMode?1100:1900); autoMode=false; }
+}
+$('#dMore').onclick=()=>{ clearTimeout(doneT); show('home'); };
+
+// ---------------------------------------------------------------------------
+// Home buttons & text sheet
+// ---------------------------------------------------------------------------
+$('#bMedia').onclick=()=>SKS.pickMedia();
+$('#bFiles').onclick=()=>SKS.pickFiles();
+$('#bText').onclick=()=>{ openSheet('#textSheet'); setTimeout(()=>$('#textIn').focus(),350); };
+$('#textGo').onclick=()=>{ const t=$('#textIn').value.trim(); if(!t) return; $('#textIn').value=''; closeSheets(); SKS.addText(t); };
+
+// ---------------------------------------------------------------------------
+// Onboarding
+// ---------------------------------------------------------------------------
+let slide=0;
+function go(i){
+  slide=i;
+  document.querySelectorAll('.slide').forEach(s=>{const k=+s.dataset.i; s.classList.toggle('on',k===i); s.classList.toggle('gone',k<i);});
+  document.querySelectorAll('.dots i').forEach((d,k)=>d.classList.toggle('on',k===i));
+  $('#onbBack').style.display = i? '':'none';
+  $('#onbNext').textContent = i===2 ? (target?'Start flicking':'Skip for now') : 'Next';
+  if(i===2) discover();
+}
+$('#onbNext').onclick=()=>{ if(slide<2) go(slide+1); else { LS.set('sks.onboarded',true); show('home'); } };
+$('#onbBack').onclick=()=>slide&&go(slide-1);
+const _choose = choose; choose = d => { _choose(d); if(current==='onb' && slide===2) $('#onbNext').textContent='Start flicking'; };
+
+function galleryState(on){
+  $('#gfCard').classList.toggle('on', on);
+  $('#gfSub').textContent = on ? 'On · open a photo in Gallery and flick toward your PC.' : 'Open any photo in Gallery and flick it to your PC.';
+}
+$('#gfCard').onclick=()=>{ if(!$('#gfCard').classList.contains('on')) SKS.openAccessibility && SKS.openAccessibility(); else toast('Gallery flick is on. Open a photo in Gallery and flick.'); };
+try{ galleryState(SKS.galleryFlickOn ? SKS.galleryFlickOn() : false); }catch(e){}
+
+// ---------------------------------------------------------------------------
+// Start
+// ---------------------------------------------------------------------------
+renderDevices();
+if(LS.get('sks.onboarded',false)) { if(current!=='flick') show('home'); } else { show('onb'); go(0); }
+discover();
+setInterval(()=>{ if(current==='home' && !document.querySelector('.sheet.on')) { searching=false; discover(); } }, 15000);
+</script>
+</body>
+</html>
